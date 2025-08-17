@@ -23,7 +23,7 @@ cmd({
   pattern: "repo",
   alias: ["sc", "script", "info"],
   desc: "Fetch GitHub repository information",
-  react: "💗",
+  react: "🎗️",
   category: "info",
   filename: __filename,
 },
@@ -31,16 +31,13 @@ async (conn, mek, m, { from, reply }) => {
   const githubRepoURL = 'https://github.com/novaxmd/NOVA-XMD';
 
   try {
-    // Extract username & repo name
     const [, username, repoName] = githubRepoURL.match(/github\.com\/([^/]+)\/([^/]+)/);
-
-    // Fetch GitHub API
     const response = await fetch(`https://api.github.com/repos/${username}/${repoName}`);
     if (!response.ok) throw new Error(`GitHub API error: ${response.status}`);
     const repoData = await response.json();
 
-    // Repo info style (moja safi)
-    const repoInfo = `
+    // 5 styles bila `description`
+    const style1 = `
 ╭━━━「 ${config.BOT_NAME} REPO 」━━━➤
 │ 📦 Name: ${repoData.name}
 │ 👤 Owner: ${repoData.owner.login}
@@ -48,24 +45,73 @@ async (conn, mek, m, { from, reply }) => {
 │ 🍴 Forks: ${repoData.forks_count}
 │ 🌐 URL: ${repoData.html_url}
 ╰━━━━━━━━━━━━━━━━━━━━━━━➤
-🔗 ${config.DESCRIPTION}
-`;
+🔗 ${config.DESCRIPTION}`;
 
-    // Select random image from /plugins
+    const style2 = `
+┏━━━━━ ⍟ ${config.BOT_NAME} GitHub Repo ⍟ ━━━━━┓
+┃ 🔖 Name : ${repoData.name}
+┃ 👑 Owner : ${repoData.owner.login}
+┃ 🌟 Stars : ${repoData.stargazers_count}
+┃ 🍽️ Forks : ${repoData.forks_count}
+┃ 🔗 Link : ${repoData.html_url}
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+✨ ${config.DESCRIPTION}`;
+
+    const style3 = `
+━━━━━━━━━━━━━━━━━━━━
+🔰 *${config.BOT_NAME} GitHub Info*
+━━━━━━━━━━━━━━━━━━━━
+🔹 *Name:* ${repoData.name}
+🔹 *Owner:* ${repoData.owner.login}
+🔹 *Stars:* ${repoData.stargazers_count}
+🔹 *Forks:* ${repoData.forks_count}
+🔹 *Link:* ${repoData.html_url}
+━━━━━━━━━━━━━━━━━━━━
+🔸 ${config.DESCRIPTION}`;
+
+    const style4 = `
+> ${config.BOT_NAME} :: Repository Info
+----------------------------------------
+[ Name  ] => ${repoData.name}
+[ Owner ] => ${repoData.owner.login}
+[ Stars ] => ${repoData.stargazers_count}
+[ Forks ] => ${repoData.forks_count}
+[ Link  ] => ${repoData.html_url}
+----------------------------------------
+${config.DESCRIPTION}`;
+
+    const style5 = `
+📦 *${config.BOT_NAME} REPO DETAILS* 📦
+━━━━━━━━━━━━━━━━━━━━
+🔰 *NAME:* ${repoData.name}
+👤 *OWNER:* ${repoData.owner.login}
+⭐ *STARS:* ${repoData.stargazers_count}
+🍴 *FORKS:* ${repoData.forks_count}
+🌐 *URL:* ${repoData.html_url}
+━━━━━━━━━━━━━━━━━━━━
+📌 ${config.DESCRIPTION}`;
+
+    const styles = [style1, style2, style3, style4, style5];
+    const selectedStyle = styles[Math.floor(Math.random() * styles.length)];
+
     const scsFolder = path.join(__dirname, "../plugins");
     const images = fs.readdirSync(scsFolder).filter(f => /^menu\d+\.jpg$/i.test(f));
-    const imageOption = images.length > 0
-      ? { url: path.join(scsFolder, images[Math.floor(Math.random() * images.length)]) }
-      : { url: "https://i.ibb.co/KhYC4FY/1221bc0bdd2354b42b293317ff2adbcf-icon.png" };
+    const randomImage = images.length > 0
+      ? fs.readFileSync(path.join(scsFolder, images[Math.floor(Math.random() * images.length)]))
+      : null;
 
-    // Message options
     const messageOptions = {
-      image: imageOption,
-      caption: repoInfo.trim(),
+      image: randomImage || { url: "https://i.ibb.co/KhYC4FY/1221bc0bdd2354b42b293317ff2adbcf-icon.png" },
+      caption: selectedStyle.trim(),
       contextInfo: {
         mentionedJid: [m.sender],
         forwardingScore: 999,
-        isForwarded: true
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: '120363382023564830@newsletter',
+          newsletterName: config.OWNER_NAME || '𝗡𝗢𝗩𝗔-𝗫𝗠𝗗',
+          serverMessageId: 143
+        }
       }
     };
 
@@ -76,3 +122,4 @@ async (conn, mek, m, { from, reply }) => {
     reply(`❌ Error: ${error.message}`);
   }
 });
+  
