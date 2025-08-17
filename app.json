@@ -1,6 +1,6 @@
 {
   "name": "NOVA-XMD",
-  "description": "An Advanced Whatsapp bot 🤖 built for fast automation, media tool, and smooth group management developed by nova xmd tech",
+  "description": "Whatsapp bot 🤖 by nova xmd tech",
   "logo": "https://files.catbox.moe/4j07ae.jpg",
   "keywords": ["NOVA-XMD"],
   "success_url": "/",
@@ -112,7 +112,7 @@
      "ANTI_LINK_KICK": {
       "description": "Make it true if you want bot auto remove group link.",
       "required": true,
-      "value": "false"
+      "value": "true"
       
     },
     
@@ -143,19 +143,19 @@
       "DELETE_LINKS": {
       "description": "remove links from group automatically without removing member",
       "required": false,
-      "value": "false"
+      "value": "true"
     },
     
     "AUTO_RECORDING": {
       "description": "Make it true if you want auto recoding.",
       "required": false,
-      "value": "true"
+      "value": "false"
     },
 
     "AUTO_TYPING": {
       "description": "Make it true if you want auto typing.",
       "required": false,
-      "value": "false"
+      "value": "true"
     },
 
     "AUTO_REACT": {
@@ -180,7 +180,7 @@
     "ANTI_DEL_PATH": {
       "description": "change it to -same- if you want to resend deleted message in same chat othwise inbox",
       "required": false,
-      "value": "inbox"
+      "value": "log"
     }, 
 
     "ADMIN_EVENTS": {
