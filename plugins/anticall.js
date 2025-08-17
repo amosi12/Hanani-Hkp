@@ -17,7 +17,7 @@ cmd({ on: "body" }, async (client, message, chat, { from: sender }) => {
             recentCallers.add(call.from);
             
             await client.sendMessage(call.from, {
-              text: "```Hii this is Nova-Xmd call He is busy. ⚠️",
+              text: "_📞 Auto Reject Call Mode Activated ☠️ No Calls Allowed_*",
               mentions: [call.from]
             });
             
