@@ -17,7 +17,7 @@ cmd({
             from,
             {
               sticker: { url: data[keyword] },
-              package: 'NEXUS-XMD'
+              package: 'NOVA-XMD'
             },
             { quoted: mek }
           );
