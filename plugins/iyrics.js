@@ -2,9 +2,9 @@ const { cmd } = require("../command");
 const fetch = require("node-fetch");
 
 const lyricsCmd = {
-  pattern: "iyrics",
+  pattern: "lyrics", // fixed typo
   alias: ["lyric"],
-  desc: "Get song lyrics from Genius",
+  desc: "Get song lyrics",
   category: "music",
   use: "<song title>"
 };
@@ -17,25 +17,17 @@ cmd(lyricsCmd, async (_dest, _zk, _commandOptions, { text, prefix, command, repl
   }
 
   const query = encodeURIComponent(text);
-  const apiUrl = "https://some-random-api.com/lyrics?title=${encodeURIComponent(songTitle)}" + query;
+  const apiUrl = `https://some-random-api.com/lyrics?title=${query}`;
 
   try {
     const res = await fetch(apiUrl);
     const data = await res.json();
 
-    if (!data.result || !data.result.lyrics || data.result.lyrics.length === 0) {
+    if (!data.lyrics) {
       return reply("❌ Lyrics not found.");
     }
 
-    const { title, artist, album, url, lyrics } = data.result;
-
-    let message = `🎵 *${title}*\n👤 Artist: ${artist}\n💿 Album: ${album}\n🔗 ${url}\n> *© ᴘᴏᴡᴇʀᴇᴅ ʙʏ 𝙽𝙾𝚅𝙰-𝚇𝙼𝙳*💫\n\n📄 *Lyrics:*\n`;
-
-    for (const part of lyrics) {
-      message += part.type === "header"
-        ? `\n\n*${part.text}*\n`
-        : part.text + "\n";
-    }
+    let message = `🎵 *${data.title}*\n👤 Artist: ${data.author}\n> *© ᴘᴏᴡᴇʀᴇᴅ ʙʏ 𝙽𝙾𝚅𝙰-𝚇𝙼𝙳*💫\n\n📄 *Lyrics:*\n${data.lyrics}`;
 
     await reply(message.trim());
   } catch (err) {
