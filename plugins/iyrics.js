@@ -17,7 +17,7 @@ cmd(lyricsCmd, async (_dest, _zk, _commandOptions, { text, prefix, command, repl
   }
 
   const query = encodeURIComponent(text);
-  const apiUrl = "https://zenz.biz.id/tools/genius?query=" + query;
+  const apiUrl = "https://some-random-api.com/lyrics?title=${encodeURIComponent(songTitle)}" + query;
 
   try {
     const res = await fetch(apiUrl);
