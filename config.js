@@ -117,6 +117,6 @@ AUTO_RECORDING: process.env.AUTO_RECORDING || "false",
 AUTO_BIO: process.env.AUTO_BIO || "false",
 // make true if you want bot to auto-update bio/status
 
-CHATBOT: process.env.CHATBOT || "false"
+CHAT_BOT: process.env.CHAT_BOT || "false"
 // make true if you want AI chatbot responses enabled
 };
