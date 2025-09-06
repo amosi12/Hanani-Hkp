@@ -1,197 +1,124 @@
-const { cmd } = require("../command");
-const { ytsearch } = require("@dark-yasiya/yt-dl.js");
+const config = require('../config');
+const { cmd } = require('../command');
+const { ytsearch } = require('@dark-yasiya/yt-dl.js'); 
+const fetch = require('node-fetch');
 
-//=========== YOUTUBE VIDEO (MP4) ===========//
-cmd({
-  pattern: "mp4",
-  alias: ["video1"],
-  react: '🎥',
-  desc: "Download YouTube video",
-  category: "main",
-  use: ".mp4 < Yt url or Name >",
-  filename: __filename
-}, async (conn, m, store, { from, prefix, quoted, q, reply }) => {
-  try {
-    if (!q) return reply("Please provide a YouTube URL or song name.");
+const BASE_URL = 'https://noobs-api.top';
 
-    const search = await ytsearch(q);
-    if (search.results.length < 1) return reply("No results found!");
-
-    let vid = search.results[0];
-    let api = "https://apis.davidcyriltech.my.id/download/ytmp4?url=" + encodeURIComponent(vid.url);
-    let res = await fetch(api);
-    let data = await res.json();
-
-    if (data.status !== 200 || !data.success || !data.result.download_url) {
-      return reply("Failed to fetch the video. Please try again later.");
-    }
-
-    let caption = `📹 *Video Details*
-🎬 *Title:* ${vid.title}
-⏳ *Duration:* ${vid.timestamp}
-👀 *Views:* ${vid.views}
-👤 *Author:* ${vid.author.name}
-🔗 *Link:* ${vid.url}
-
-*Choose download format:*
-1. 📄 Document (no preview)
-2. ▶️ Normal Video (with preview)
-
-_Reply to this message with 1 or 2 to download._`;
-
-    let ctx = {
-      mentionedJid: [store.sender],
-      forwardingScore: 999,
-      isForwarded: true,
-      forwardedNewsletterMessageInfo: {
-        newsletterJid: '120363382023564830@newsletter',
-        newsletterName: "NOVA TECH",
-        serverMessageId: 143
-      }
-    };
-
-    const sentMsg = await conn.sendMessage(from, {
-      image: { url: vid.thumbnail },
-      caption,
-      contextInfo: ctx
-    }, { quoted: m });
-
-    conn.ev.on("messages.upsert", async update => {
-      const msg = update.messages[0];
-      if (!msg.message?.extendedTextMessage) return;
-
-      const text = msg.message.extendedTextMessage.text.trim();
-      if (msg.message.extendedTextMessage.contextInfo?.stanzaId === sentMsg.key.id) {
-        await conn.sendMessage(from, { react: { text: '⬇️', key: msg.key } });
-
-        switch (text) {
-          case '1':
-            await conn.sendMessage(from, {
-              document: { url: data.result.download_url },
-              mimetype: 'video/mp4',
-              fileName: vid.title + ".mp4",
-              contextInfo: ctx
-            }, { quoted: msg });
-            break;
-          case '2':
-            await conn.sendMessage(from, {
-              video: { url: data.result.download_url },
-              mimetype: "video/mp4",
-              contextInfo: ctx
-            }, { quoted: msg });
-            break;
-          default:
-            await conn.sendMessage(from, {
-              text: "*Please Reply with ( 1 or 2 ) ❤️*"
-            }, { quoted: msg });
-            break;
+// 🎬 VIDEO COMMAND
+cmd({ 
+    pattern: "video", 
+    alias: ["video", "ytv"], 
+    react: "🎥", 
+    desc: "Download Youtube video", 
+    category: "main", 
+    use: '.video < Yt url or Name >', 
+    filename: __filename 
+}, async (conn, mek, m, { from, q, reply }) => { 
+    try { 
+        if (!q) return await reply("*Please provide a YouTube URL or Video Name.*");
+        
+        const yt = await ytsearch(q);
+        if (yt.results.length < 1) return reply("No results found!");
+        
+        let yts = yt.results[0];  
+        let apiUrl = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(yts.url)}&format=mp4`;
+        
+        let response = await fetch(apiUrl);
+        let data = await response.json();
+        
+        if (!data.downloadLink) {
+            return reply("Failed to fetch the video. Please try again later.");
         }
-      }
-    });
-  } catch (e) {
-    console.log(e);
-    reply("An error occurred. Please try again later.");
-  }
-});
+        
+        let ytmsg = `╔═══〔 *NOVA-XMD* 〕═══❒
+║╭───────────────◆  
+║│ *VIDEO DOWNLOADER*
+║╰───────────────◆
+╚══════════════════❒
+╔══════════════════❒
+║ ⿻ *Title:*  ${yts.title}
+║ ⿻ *Duration:*  ${yts.timestamp}
+║ ⿻ *Views:*  ${yts.views}
+║ ⿻ *Author:*  ${yts.author.name}
+║ ⿻ *Link:*  ${yts.url}
+╚══════════════════❒`;
 
+        // Send video details
+        await conn.sendMessage(from, { image: { url: yts.image || '' }, caption: ytmsg }, { quoted: mek });
+        
+        // Send video file
+        await conn.sendMessage(from, { video: { url: data.downloadLink }, mimetype: "video/mp4" }, { quoted: mek });
+        
+        // Send document file
+        await conn.sendMessage(from, { 
+            document: { url: data.downloadLink }, 
+            mimetype: "video/mp4", 
+            fileName: `${yts.title}.mp4`, 
+            caption: `*${yts.title}*\n> *© Powered by NOVA-XMD 💙*`
+        }, { quoted: mek });
 
-//=========== YOUTUBE SONG (MP3) ===========//
-cmd({
-  pattern: "song1",
-  alias: ["ytdl3", "play1"],
-  react: '🎶',
-  desc: "Download YouTube song",
-  category: "main",
-  use: ".song < Yt url or Name >",
-  filename: __filename
-}, async (conn, m, store, { from, prefix, quoted, q, reply }) => {
-  try {
-    if (!q) return reply("Please provide a YouTube URL or song name.");
-
-    const search = await ytsearch(q);
-    if (search.results.length < 1) return reply("No results found!");
-
-    let song = search.results[0];
-    let api = "https://apis.davidcyriltech.my.id/youtube/mp3?url=" + encodeURIComponent(song.url);
-    let res = await fetch(api);
-    let data = await res.json();
-
-    if (data.status !== 200 || !data.success || !data.result.downloadUrl) {
-      return reply("Failed to fetch the audio. Please try again later.");
+    } catch (e) {
+        console.log(e);
+        reply("An error occurred. Please try again later.");
     }
+});  
+       
+// 🎵 MP3 / PLAY COMMAND
+cmd({ 
+     pattern: "mp3", 
+     alias: ["yta", "play"], 
+     react: "🎶", 
+     desc: "Download Youtube song",
+     category: "main", 
+     use: '.mp3 < Yt url or Name >', 
+     filename: __filename 
+}, async (conn, mek, m, { from, q, reply }) => { 
+    try { 
+        if (!q) return await reply("*Please provide a YouTube URL or Song Name.*");
 
-    let caption = `🎵 *Song Details*
-🎶 *Title:* ${song.title}
-⏳ *Duration:* ${song.timestamp}
-👀 *Views:* ${song.views}
-👤 *Author:* ${song.author.name}
-🔗 *Link:* ${song.url}
-
-*Choose download format:*
-1. 📄 MP3 as Document
-2. 🎧 MP3 as Audio (Play)
-3. 🎙️ MP3 as Voice Note (PTT)
-
-_Reply with 1, 2 or 3 to this message to download the format you prefer._`;
-
-    let ctx = {
-      mentionedJid: [store.sender],
-      forwardingScore: 999,
-      isForwarded: true,
-      forwardedNewsletterMessageInfo: {
-        newsletterJid: '120363382023564830@newsletter',
-        newsletterName: "𝘕𝘖𝘝𝘈 𝘟𝘔𝘋",
-        serverMessageId: 143
-      }
-    };
-
-    const sentMsg = await conn.sendMessage(from, {
-      image: { url: song.thumbnail },
-      caption,
-      contextInfo: ctx
-    }, { quoted: m });
-
-    conn.ev.on("messages.upsert", async update => {
-      const msg = update.messages[0];
-      if (!msg.message?.extendedTextMessage) return;
-
-      const text = msg.message.extendedTextMessage.text.trim();
-      if (msg.message.extendedTextMessage.contextInfo?.stanzaId === sentMsg.key.id) {
-        await conn.sendMessage(from, { react: { text: '⬇️', key: msg.key } });
-
-        switch (text) {
-          case '1':
-            await conn.sendMessage(from, {
-              document: { url: data.result.downloadUrl },
-              mimetype: "audio/mpeg",
-              fileName: song.title + ".mp3",
-              contextInfo: ctx
-            }, { quoted: msg });
-            break;
-          case '2':
-            await conn.sendMessage(from, {
-              audio: { url: data.result.downloadUrl },
-              mimetype: "audio/mpeg",
-              contextInfo: ctx
-            }, { quoted: msg });
-            break;
-          case '3':
-            await conn.sendMessage(from, {
-              audio: { url: data.result.downloadUrl },
-              mimetype: "audio/mpeg",
-              ptt: true,
-              contextInfo: ctx
-            }, { quoted: msg });
-            break;
-          default:
-            await conn.sendMessage(from, {
-              text: "*Invalid selection. Please select between (1, 2 or 3) 🔴*"
-            }, { quoted: msg });
+        const yt = await ytsearch(q);
+        if (yt.results.length < 1) return reply("No results found!");
+    
+        let yts = yt.results[0];  
+        let apiUrl = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(yts.url)}&format=mp3`;
+        
+        let response = await fetch(apiUrl);
+        let data = await response.json();
+    
+        if (!data.downloadLink) {
+            return reply("Failed to fetch the audio. Please try again later.");
         }
-      }
-    });
-  } catch (e) {
-    console.log(e);
-    reply("An error occurred. Please try again later.");
-  }
+    
+        let ytmsg = `╔═══〔 *NOVA-XMD* 〕═══❒
+║╭───────────────◆  
+║│ *SONG DOWNLOADER*
+║╰───────────────◆
+╚══════════════════❒
+╔══════════════════❒
+║ ⿻ *Title:*  ${yts.title}
+║ ⿻ *Duration:*  ${yts.timestamp}
+║ ⿻ *Views:*  ${yts.views}
+║ ⿻ *Author:*  ${yts.author.name}
+║ ⿻ *Link:*  ${yts.url}
+╚══════════════════❒`;
+
+        // Send song details
+        await conn.sendMessage(from, { image: { url: yts.image || '' }, caption: ytmsg }, { quoted: mek });
+    
+        // Send audio file
+        await conn.sendMessage(from, { audio: { url: data.downloadLink }, mimetype: "audio/mpeg" }, { quoted: mek });
+    
+        // Send document file
+        await conn.sendMessage(from, { 
+            document: { url: data.downloadLink }, 
+            mimetype: "audio/mpeg", 
+            fileName: `${yts.title}.mp3`, 
+            caption: `> *© Powered by NOVA-XMD 💙*`
+        }, { quoted: mek });
+
+    } catch (e) {
+        console.log(e);
+        reply("An error occurred. Please try again later.");
+    }
 });
