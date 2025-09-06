@@ -8,132 +8,110 @@ const BOT_NAME = 'B.M.B-TECH';
 // Helper to build caption
 const buildCaption = (type, video) => {
     const banner = type === "video" ? `${BOT_NAME} VIDEO PLAYER` : `${BOT_NAME} SONG PLAYER`;
-    return (
-        `*${banner}*\n\n` +
-        `╭───────────────◆\n` +
-        `│⿻ *Title:* ${video.title}\n` +
-        `│⿻ *Duration:* ${video.timestamp}\n` +
-        `│⿻ *Views:* ${video.views.toLocaleString()}\n` +
-        `│⿻ *Uploaded:* ${video.ago}\n` +
-        `│⿻ *Channel:* ${video.author.name}\n` +
-        `╰────────────────◆\n\n` +
-        `🔗 ${video.url}`
-    );
+    return `
+╭━〔 ${banner} 〕━⬣
+┃
+┃ ❖ Title: ${video.title}
+┃ ❖ Channel: ${video.author.name}
+┃ ❖ Duration: ${video.timestamp}
+┃ ❖ Views: ${video.views}
+┃ ❖ Uploaded: ${video.ago}
+┃
+╰───────────────⬣`;
 };
 
-// 🎵 PLAY COMMAND (send audio directly)
+// PLAY (Search & Send First Song as MP3)
 cmd({
     pattern: "play",
-    alias: ["ytplay", "music"],
-    react: "🎵",
-    desc: "Download YouTube audio",
+    alias: ["music"],
+    react: "🎶",
+    desc: "Play a song from YouTube",
     category: "download",
     use: ".play <song name>"
-}, async (conn, m, mek, { from, q, reply }) => {
-    try {
-        if (!q) return reply("❌ Please provide a song name!");
+}, async (conn, mek, m, { from, q }) => {
+    if (!q) return conn.sendMessage(from, { text: "Please provide a song name." }, { quoted: mek });
 
+    try {
         const search = await yts(q);
         const video = search.videos[0];
-        if (!video) return reply("❌ No results found!");
+        if (!video) return conn.sendMessage(from, { text: "No results found." }, { quoted: mek });
 
-        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.url)}&format=mp3`;
         const response = await axios.get(apiURL);
-        const data = response.data;
-
-        if (!data.downloadLink) return reply("❌ Failed to get audio link!");
+        const audioUrl = response.data.result.downloadUrl;
 
         await conn.sendMessage(from, {
-            image: { url: video.thumbnail },
-            caption: buildCaption('audio', video)
-        }, { quoted: mek });
-
-        await conn.sendMessage(from, {
-            audio: { url: data.downloadLink },
+            audio: { url: audioUrl },
             mimetype: 'audio/mpeg',
-            fileName: `${video.title}.mp3`
+            ptt: false,
+            caption: buildCaption("song", video)
         }, { quoted: mek });
 
-    } catch (e) {
-        console.error(e);
-        reply("❌ Error while processing!");
+    } catch (error) {
+        console.error(error);
+        conn.sendMessage(from, { text: "❌ Error: Something went wrong." }, { quoted: mek });
     }
 });
 
-// 🎶 SONG COMMAND (send audio as document)
+// SONG (Alias for Play)
 cmd({
     pattern: "song",
-    alias: ["ytsong"],
-    react: "🎶",
-    desc: "Download YouTube song as document",
+    react: "🎵",
+    desc: "Download a song from YouTube",
     category: "download",
     use: ".song <song name>"
-}, async (conn, m, mek, { from, q, reply }) => {
-    try {
-        if (!q) return reply("❌ Please provide a song name!");
+}, async (conn, mek, m, { from, q }) => {
+    if (!q) return conn.sendMessage(from, { text: "Please provide a song name." }, { quoted: mek });
 
+    try {
         const search = await yts(q);
         const video = search.videos[0];
-        if (!video) return reply("❌ No results found!");
+        if (!video) return conn.sendMessage(from, { text: "No results found." }, { quoted: mek });
 
-        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.url)}&format=mp3`;
         const response = await axios.get(apiURL);
-        const data = response.data;
-
-        if (!data.downloadLink) return reply("❌ Failed to get song link!");
+        const audioUrl = response.data.result.downloadUrl;
 
         await conn.sendMessage(from, {
-            image: { url: video.thumbnail },
-            caption: buildCaption('song', video)
-        }, { quoted: mek });
-
-        await conn.sendMessage(from, {
-            document: { url: data.downloadLink },
+            audio: { url: audioUrl },
             mimetype: 'audio/mpeg',
-            fileName: `${video.title}.mp3`
+            ptt: false,
+            caption: buildCaption("song", video)
         }, { quoted: mek });
 
-    } catch (e) {
-        console.error(e);
-        reply("❌ Error while processing!");
+    } catch (error) {
+        console.error(error);
+        conn.sendMessage(from, { text: "❌ Error: Something went wrong." }, { quoted: mek });
     }
 });
 
-// 🎬 VIDEO COMMAND
+// VIDEO (Download YouTube Video)
 cmd({
     pattern: "video",
-    alias: ["ytvideo"],
     react: "🎬",
-    desc: "Download YouTube video",
+    desc: "Download a video from YouTube",
     category: "download",
     use: ".video <video name>"
-}, async (conn, m, mek, { from, q, reply }) => {
-    try {
-        if (!q) return reply("❌ Please provide a video name!");
+}, async (conn, mek, m, { from, q }) => {
+    if (!q) return conn.sendMessage(from, { text: "Please provide a video name." }, { quoted: mek });
 
+    try {
         const search = await yts(q);
         const video = search.videos[0];
-        if (!video) return reply("❌ No results found!");
+        if (!video) return conn.sendMessage(from, { text: "No results found." }, { quoted: mek });
 
-        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp4`;
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.url)}&format=mp4`;
         const response = await axios.get(apiURL);
-        const data = response.data;
-
-        if (!data.downloadLink) return reply("❌ Failed to get video link!");
+        const videoUrl = response.data.result.downloadUrl;
 
         await conn.sendMessage(from, {
-            image: { url: video.thumbnail },
-            caption: buildCaption('video', video)
-        }, { quoted: mek });
-
-        await conn.sendMessage(from, {
-            video: { url: data.downloadLink },
+            video: { url: videoUrl },
             mimetype: 'video/mp4',
-            fileName: `${video.title}.mp4`
+            caption: buildCaption("video", video)
         }, { quoted: mek });
 
-    } catch (e) {
-        console.error(e);
-        reply("❌ Error while processing!");
+    } catch (error) {
+        console.error(error);
+        conn.sendMessage(from, { text: "❌ Error: Something went wrong." }, { quoted: mek });
     }
 });
