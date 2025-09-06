@@ -1,124 +1,139 @@
-const config = require('../config');
 const { cmd } = require('../command');
-const { ytsearch } = require('@dark-yasiya/yt-dl.js'); 
-const fetch = require('node-fetch');
+const axios = require('axios');
+const yts = require('yt-search');
 
 const BASE_URL = 'https://noobs-api.top';
+const BOT_NAME = 'B.M.B-TECH';
 
-// 🎬 VIDEO COMMAND
-cmd({ 
-    pattern: "video", 
-    alias: ["video", "ytv"], 
-    react: "🎥", 
-    desc: "Download Youtube video", 
-    category: "main", 
-    use: '.video < Yt url or Name >', 
-    filename: __filename 
-}, async (conn, mek, m, { from, q, reply }) => { 
-    try { 
-        if (!q) return await reply("*Please provide a YouTube URL or Video Name.*");
-        
-        const yt = await ytsearch(q);
-        if (yt.results.length < 1) return reply("No results found!");
-        
-        let yts = yt.results[0];  
-        let apiUrl = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(yts.url)}&format=mp4`;
-        
-        let response = await fetch(apiUrl);
-        let data = await response.json();
-        
-        if (!data.downloadLink) {
-            return reply("Failed to fetch the video. Please try again later.");
-        }
-        
-        let ytmsg = `╔═══〔 *NOVA-XMD* 〕═══❒
-║╭───────────────◆  
-║│ *VIDEO DOWNLOADER*
-║╰───────────────◆
-╚══════════════════❒
-╔══════════════════❒
-║ ⿻ *Title:*  ${yts.title}
-║ ⿻ *Duration:*  ${yts.timestamp}
-║ ⿻ *Views:*  ${yts.views}
-║ ⿻ *Author:*  ${yts.author.name}
-║ ⿻ *Link:*  ${yts.url}
-╚══════════════════❒`;
+// Helper to build caption
+const buildCaption = (type, video) => {
+    const banner = type === "video" ? `${BOT_NAME} VIDEO PLAYER` : `${BOT_NAME} SONG PLAYER`;
+    return (
+        `*${banner}*\n\n` +
+        `╭───────────────◆\n` +
+        `│⿻ *Title:* ${video.title}\n` +
+        `│⿻ *Duration:* ${video.timestamp}\n` +
+        `│⿻ *Views:* ${video.views.toLocaleString()}\n` +
+        `│⿻ *Uploaded:* ${video.ago}\n` +
+        `│⿻ *Channel:* ${video.author.name}\n` +
+        `╰────────────────◆\n\n` +
+        `🔗 ${video.url}`
+    );
+};
 
-        // Send video details
-        await conn.sendMessage(from, { image: { url: yts.image || '' }, caption: ytmsg }, { quoted: mek });
-        
-        // Send video file
-        await conn.sendMessage(from, { video: { url: data.downloadLink }, mimetype: "video/mp4" }, { quoted: mek });
-        
-        // Send document file
-        await conn.sendMessage(from, { 
-            document: { url: data.downloadLink }, 
-            mimetype: "video/mp4", 
-            fileName: `${yts.title}.mp4`, 
-            caption: `*${yts.title}*\n> *© Powered by NOVA-XMD 💙*`
-        }, { quoted: mek });
+// ======================= PLAY (audio as voice) =======================
+cmd({
+    pattern: "play",
+    alias: ["music"],
+    react: '🎵',
+    desc: "Download YouTube audio",
+    category: "Search",
+    use: ".play <song name>"
+}, async (msg, zk, { args }) => {
+    const query = args.join(" ");
+    if (!query) return zk.sendMessage(msg.chat, { text: "Please provide a song name or keyword." }, { quoted: msg });
+
+    try {
+        const search = await yts(query);
+        const video = search.videos[0];
+        if (!video) return zk.sendMessage(msg.chat, { text: "No results found." }, { quoted: msg });
+
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
+        const { data } = await axios.get(apiURL);
+
+        if (!data.downloadLink) return zk.sendMessage(msg.chat, { text: "Failed to fetch download link." }, { quoted: msg });
+
+        await zk.sendMessage(msg.chat, {
+            image: { url: video.thumbnail },
+            caption: buildCaption("audio", video)
+        }, { quoted: msg });
+
+        await zk.sendMessage(msg.chat, {
+            audio: { url: data.downloadLink },
+            mimetype: 'audio/mpeg',
+            fileName: `${video.title}.mp3`
+        }, { quoted: msg });
 
     } catch (e) {
-        console.log(e);
-        reply("An error occurred. Please try again later.");
+        console.error("PLAY ERROR:", e);
+        zk.sendMessage(msg.chat, { text: "An error occurred while processing your request." }, { quoted: msg });
     }
-});  
-       
-// 🎵 MP3 / PLAY COMMAND
-cmd({ 
-     pattern: "mp3", 
-     alias: ["yta", "play"], 
-     react: "🎶", 
-     desc: "Download Youtube song",
-     category: "main", 
-     use: '.mp3 < Yt url or Name >', 
-     filename: __filename 
-}, async (conn, mek, m, { from, q, reply }) => { 
-    try { 
-        if (!q) return await reply("*Please provide a YouTube URL or Song Name.*");
+});
 
-        const yt = await ytsearch(q);
-        if (yt.results.length < 1) return reply("No results found!");
-    
-        let yts = yt.results[0];  
-        let apiUrl = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(yts.url)}&format=mp3`;
-        
-        let response = await fetch(apiUrl);
-        let data = await response.json();
-    
-        if (!data.downloadLink) {
-            return reply("Failed to fetch the audio. Please try again later.");
-        }
-    
-        let ytmsg = `╔═══〔 *NOVA-XMD* 〕═══❒
-║╭───────────────◆  
-║│ *SONG DOWNLOADER*
-║╰───────────────◆
-╚══════════════════❒
-╔══════════════════❒
-║ ⿻ *Title:*  ${yts.title}
-║ ⿻ *Duration:*  ${yts.timestamp}
-║ ⿻ *Views:*  ${yts.views}
-║ ⿻ *Author:*  ${yts.author.name}
-║ ⿻ *Link:*  ${yts.url}
-╚══════════════════❒`;
+// ======================= SONG (audio as document) =======================
+cmd({
+    pattern: "song",
+    alias: ["mp3"],
+    react: '🎶',
+    desc: "Download YouTube song as document",
+    category: "Search",
+    use: ".song <song name>"
+}, async (msg, zk, { args }) => {
+    const query = args.join(" ");
+    if (!query) return zk.sendMessage(msg.chat, { text: "Please provide a song name or keyword." }, { quoted: msg });
 
-        // Send song details
-        await conn.sendMessage(from, { image: { url: yts.image || '' }, caption: ytmsg }, { quoted: mek });
-    
-        // Send audio file
-        await conn.sendMessage(from, { audio: { url: data.downloadLink }, mimetype: "audio/mpeg" }, { quoted: mek });
-    
-        // Send document file
-        await conn.sendMessage(from, { 
-            document: { url: data.downloadLink }, 
-            mimetype: "audio/mpeg", 
-            fileName: `${yts.title}.mp3`, 
-            caption: `> *© Powered by NOVA-XMD 💙*`
-        }, { quoted: mek });
+    try {
+        const search = await yts(query);
+        const video = search.videos[0];
+        if (!video) return zk.sendMessage(msg.chat, { text: "No results found." }, { quoted: msg });
+
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
+        const { data } = await axios.get(apiURL);
+
+        if (!data.downloadLink) return zk.sendMessage(msg.chat, { text: "Failed to fetch download link." }, { quoted: msg });
+
+        await zk.sendMessage(msg.chat, {
+            image: { url: video.thumbnail },
+            caption: buildCaption("song", video)
+        }, { quoted: msg });
+
+        await zk.sendMessage(msg.chat, {
+            document: { url: data.downloadLink },
+            mimetype: 'audio/mpeg',
+            fileName: `${video.title}.mp3`
+        }, { quoted: msg });
 
     } catch (e) {
-        console.log(e);
-        reply("An error occurred. Please try again later.");
+        console.error("SONG ERROR:", e);
+        zk.sendMessage(msg.chat, { text: "An error occurred while processing your request." }, { quoted: msg });
+    }
+});
+
+// ======================= VIDEO (mp4) =======================
+cmd({
+    pattern: "video",
+    alias: ["mp4"],
+    react: '🎬',
+    desc: "Download YouTube video",
+    category: "Search",
+    use: ".video <video name>"
+}, async (msg, zk, { args }) => {
+    const query = args.join(" ");
+    if (!query) return zk.sendMessage(msg.chat, { text: "Please provide a video name or keyword." }, { quoted: msg });
+
+    try {
+        const search = await yts(query);
+        const video = search.videos[0];
+        if (!video) return zk.sendMessage(msg.chat, { text: "No results found." }, { quoted: msg });
+
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp4`;
+        const { data } = await axios.get(apiURL);
+
+        if (!data.downloadLink) return zk.sendMessage(msg.chat, { text: "Failed to fetch download link." }, { quoted: msg });
+
+        await zk.sendMessage(msg.chat, {
+            image: { url: video.thumbnail },
+            caption: buildCaption("video", video)
+        }, { quoted: msg });
+
+        await zk.sendMessage(msg.chat, {
+            video: { url: data.downloadLink },
+            mimetype: 'video/mp4',
+            fileName: `${video.title}.mp4`
+        }, { quoted: msg });
+
+    } catch (e) {
+        console.error("VIDEO ERROR:", e);
+        zk.sendMessage(msg.chat, { text: "An error occurred while processing your request." }, { quoted: msg });
     }
 });
