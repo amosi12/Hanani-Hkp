@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------
-//          NOVA XMD WHATSAPP BOT 🤖
+//          𝗡𝗢𝗩𝗔-𝗫𝗠𝗗 🌟
 //---------------------------------------------------------------------------
 //  ⚠️ DO NOT MODIFY THIS FILE ⚠️  
 //---------------------------------------------------------------------------
@@ -389,33 +389,6 @@ async (conn, mek, m, { from, args, isCreator, reply }) => {
     } else {
         return await sendResponse(conn, from, `*🫟 ᴇxᴀᴍᴘʟᴇ:  .sᴛᴀᴛᴜs-ʀᴇᴘʟʏ ᴏɴ*`, m);
     }
-});
-
-cmd({
-  pattern: "antilink",
-  alias: ["antilinks"],
-  desc: "Enable or disable ANTI_LINK in groups",
-  category: "group",
-  react: "🚫",
-  filename: __filename
-}, async (conn, mek, m, { isGroup, isAdmins, isBotAdmins, args, from, reply }) => {
-  try {
-    if (!isGroup) return await sendResponse(conn, from, 'This command can only be used in a group.', m);
-    if (!isBotAdmins) return await sendResponse(conn, from, 'Bot must be an admin to use this command.', m);
-    if (!isAdmins) return await sendResponse(conn, from, 'You must be an admin to use this command.', m);
-
-    if (args[0] === "on") {
-      config.ANTI_LINK = "true";
-      await sendResponse(conn, from, "✅ ANTI_LINK has been enabled.", m);
-    } else if (args[0] === "off") {
-      config.ANTI_LINK = "false";
-      await sendResponse(conn, from, "❌ ANTI_LINK has been disabled.", m);
-    } else {
-      await sendResponse(conn, from, "Usage: *.antilink on/off*", m);
-    }
-  } catch (e) {
-    await sendResponse(conn, from, `Error: ${e.message}`, m);
-  }
 });
 
 cmd({
