@@ -161,7 +161,8 @@ async function connectToWA() {
             }
           }
 
-          await conn.sendMessage(conn.user.id, startMess)
+          const myJid = await jidNormalizedUser(conn.user.id);
+        await conn.sendMessage(myJid, startMess)
         } catch (e) {
           console.error('Error during initialization:', e)
         }
