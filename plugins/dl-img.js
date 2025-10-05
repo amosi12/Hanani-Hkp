@@ -31,7 +31,7 @@ cmd({
 
     await reply(`🔍 *Searching images for:* "${query}" ...`);
 
-    const res = await axios.get(`https://apis.davidcyriltech.my.id/googleimage?query=${encodeURIComponent(query)}`);
+    const res = await axios.get(`https://api.siputzx.my.id/api/images?query=${encodeURIComponent(query)}`);
     if (!res.data?.success || !res.data.results?.length) {
       return reply("❌ *No images found. Try different keywords.*");
     }
