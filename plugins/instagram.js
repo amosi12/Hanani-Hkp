@@ -14,32 +14,31 @@ async (conn, mek, m, { from, q, reply }) => {
 
     try {
         const igUrl = q && q.trim();
-        if (!igUrl) return reply("Please send an Instagram video link!");
-        if (!igUrl.includes("https://") || !igUrl.includes("instagram.com"))
-            return reply("Please send a valid Instagram link.");
+        if (!igUrl) return reply("Please send an Instagram link!");
+        if (!igUrl.includes("https://"))
+            return reply("Send a valid Instagram URL.");
 
-        const apiUrl = `https://apis-keith.vercel.app/download/instagramdl?url=${encodeURIComponent(igUrl)}`;
+        // API MPYA (Stable)
+        const apiUrl = `https://bk9.fun/download/ig?url=${encodeURIComponent(igUrl)}`;
 
-        const response = await axios.get(apiUrl);
-        const data = response.data;
+        const { data } = await axios.get(apiUrl);
 
-        if (!data.status || !data.result || !data.result.downloadUrl)
-            return reply("Failed to fetch video. The post might be private or unavailable.");
+        if (!data || !data.result || !data.result.video)
+            return reply("Failed to fetch Instagram media. Try another link.");
 
-        const downloadUrl = data.result.downloadUrl;
-        const isVideo = data.result.type === "mp4";
+        const video = data.result.video;
+        const audio = data.result.audio;
 
         const caption = `
-*${config.BOT || 'Instagram Downloader'} Instagram Downloader*
+*${config.BOT || 'Instagram Downloader'} IG Downloader*
 |__________________________|
-|       *MEDIA TYPE*
-       ${isVideo ? 'Video' : 'Unknown'}
+|       *MEDIA FOUND*
 |_________________________|
 | REPLY WITH A NUMBER BELOW
 |_________________________|
 |____  *VIDEO OPTIONS*  ____
 |-᳆  1. Play Video
-|-᳆  2. Download Video
+|-᳆  2. Video File
 |_________________________|
 |____  *AUDIO OPTIONS*  ____
 |-᳆  3. Audio Only
@@ -48,7 +47,7 @@ async (conn, mek, m, { from, q, reply }) => {
 `;
 
         const sentMsg = await conn.sendMessage(from, {
-            image: { url: config.URL || "" },
+            image: { url: video.thumb || "" },
             caption,
             contextInfo: {
                 forwardingScore: 999,
@@ -61,6 +60,7 @@ async (conn, mek, m, { from, q, reply }) => {
             }
         }, { quoted: mek });
 
+        // LISTENER
         conn.ev.on("messages.upsert", async update => {
             const msg = update.messages[0];
             if (!msg.message?.extendedTextMessage) return;
@@ -75,43 +75,40 @@ async (conn, mek, m, { from, q, reply }) => {
                 });
 
                 switch (text) {
-
                     case "1":
                         await conn.sendMessage(from, {
-                            video: { url: downloadUrl },
-                            caption: `*${config.BOT || "Instagram Downloader"}* - Playing Video`
+                            video: { url: video.url },
+                            caption: `*${config.BOT || "IG"}* - Playing Video`
                         }, { quoted: msg });
                         break;
 
                     case "2":
                         await conn.sendMessage(from, {
-                            document: { url: downloadUrl },
+                            document: { url: video.url },
                             mimetype: "video/mp4",
-                            fileName: `${config.BOT || "Instagram"}_${Date.now()}.mp4`,
-                            caption: `*${config.BOT || "Instagram Downloader"}* - Download Video`
+                            fileName: `IG_${Date.now()}.mp4`
                         }, { quoted: msg });
                         break;
 
                     case "3":
                         await conn.sendMessage(from, {
-                            audio: { url: downloadUrl },
+                            audio: { url: audio },
                             mimetype: "audio/mpeg",
-                            caption: `*${config.BOT || "Instagram Downloader"}* - Audio`
+                            caption: `*Instagram Audio*`
                         }, { quoted: msg });
                         break;
 
                     case "4":
                         await conn.sendMessage(from, {
-                            document: { url: downloadUrl },
+                            document: { url: audio },
                             mimetype: "audio/mpeg",
-                            fileName: `${config.BOT || "Instagram"}_${Date.now()}.mp3`,
-                            caption: `*${config.BOT || "Instagram Downloader"}* - Audio Document`
+                            fileName: `IG_${Date.now()}.mp3`
                         }, { quoted: msg });
                         break;
 
                     default:
                         await conn.sendMessage(from, {
-                            text: "Please choose a number between 1 - 4 only."
+                            text: "Choose a number between 1 - 4 only."
                         }, { quoted: msg });
                         break;
                 }
@@ -123,7 +120,7 @@ async (conn, mek, m, { from, q, reply }) => {
         });
 
     } catch (error) {
-        reply(`Failed to download media. Error: ${error.message}\nTry another link or ensure the post is public.`);
+        reply("Instagram download failed: " + error.message);
     }
 
 });
